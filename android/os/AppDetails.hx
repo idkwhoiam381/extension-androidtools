@@ -1,4 +1,4 @@
-package;
+package android.os;
 
 import lime.system.JNI;
 
