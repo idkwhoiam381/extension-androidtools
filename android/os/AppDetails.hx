@@ -18,7 +18,7 @@ class VersionDetails {
         
         var method = JNI.createStaticMethod(className, methodName, "()Ljava/lang/String;");
         
-        return method;
+        return method();
     }
     
     public static function getVersionCode():Int {
@@ -27,7 +27,7 @@ class VersionDetails {
         
         var method = JNI.createStaticMethod(className, methodName, "()I");
         
-        return method;
+        return method();
     }
 }
 
