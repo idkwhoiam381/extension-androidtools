@@ -25,5 +25,3 @@ class AppDetails {
         return method();
     }
 }
-
-}
