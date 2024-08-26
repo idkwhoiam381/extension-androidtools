@@ -4,6 +4,8 @@ package android.os;
 #error 'extension-androidtools is not supported on your current platform'
 #end
 
+import lime.system.JNI;
+
 class AppDetails {
     public static function getVersionName():String {
         var className = "org/haxe/extension/Details";
