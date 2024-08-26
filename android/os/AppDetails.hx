@@ -1,30 +1,14 @@
 package android.os;
 
+#if (!android && !native)
+#error 'extension-androidtools is not supported on your current platform'
+#end
+
 import lime.system.JNI;
 
 class AppDetails {
-    public static function getAppVersionName():String {
-        return JNI.createStaticMethod("android/content/pm/PackageManager", "getPackageInfo", "(Ljava/lang/String;I)Landroid/content/pm/PackageInfo;", true).call(["your.package.name", 0].map(String));
-    }
-
-    public static function getAppPackageName():String {
-        var context = JNI.createStaticMethod("android/app/Activity", "getPackageName", "()Ljava/lang/String;", false);
-        return context.call();
-    }
-
-    public static function getAppName():String {
-        // Get PackageInfo for our app
-        var packageInfo = JNI.createStaticMethod("android/content/pm/PackageManager", "getPackageInfo", "(Ljava/lang/String;I)Landroid/content/pm/PackageInfo;", true).call(["your.package.name", 0].map(String));
-
-        // Get application info from PackageInfo
-        var appInfo = JNI.createMemberField("android/content/pm/PackageInfo", "applicationInfo", "Landroid/content/pm/ApplicationInfo;", true);
-
-        // Get label resource ID from ApplicationInfo
-        var labelResId = JNI.createMemberField("android/content/pm/ApplicationInfo", "labelRes", "I", true);
-
-        // Get label string resource
-        var labelString = JNI.createStaticMethod("android/content/res/Resources", "getString", "(I)Ljava/lang/String;", false).call([labelResId].map(String));
-
-        return labelString;
-    }
+     public static function getAppVersionName():Int 
+        return JNI.createStaticMethod("org.haxe.extension.Details", "getVersionName", "(Landroid/content/Context;)Ljava/lang/String;");
+     public static function getAppName():String 
+        return JNI.createStaticMethod("org.haxe.extension.Details", "getVersionCode", "(Landroid/content/Context;)I");       
 }
