@@ -7,11 +7,6 @@ package android.os;
 import lime.system.JNI;
 
 class AppDetails {
-     package org.haxe.extension;
-
-import lime.system.JNI;
-
-class VersionDetails {
     public static function getVersionName():String {
         var className = "org/haxe/extension/Details";
         var methodName = "getVersionName";
