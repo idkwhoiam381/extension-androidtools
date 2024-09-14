@@ -83,7 +83,12 @@ public class Tools extends Extension
 
 		try
 		{
-			final PackageInfo info = (PackageInfo) mainContext.getPackageManager().getPackageInfo(packageName, PackageManager.GET_PERMISSIONS);
+			final PackageInfo info;
+
+			if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU)
+				info = (PackageInfo) mainContext.getPackageManager().getPackageInfo(packageName, PackageManager.PackageInfoFlags.of(PackageManager.GET_PERMISSIONS));
+			else
+				info = (PackageInfo) mainContext.getPackageManager().getPackageInfo(packageName, PackageManager.GET_PERMISSIONS);
 
 			for (int i = 0; i < info.requestedPermissions.length; i++)
 			{
@@ -254,7 +259,12 @@ public class Tools extends Extension
 			if (file.exists())
 			{
 				Intent intent = new Intent(Intent.ACTION_VIEW);
-				intent.setDataAndType(Build.VERSION.SDK_INT >= Build.VERSION_CODES.N ? FileProvider.getUriForFile(mainContext, packageName + ".provider", file) : Uri.fromFile(file), "application/vnd.android.package-archive");
+
+				if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N)
+					intent.setDataAndType(FileProvider.getUriForFile(mainContext, packageName + ".provider", file), "application/vnd.android.package-archive");
+				else
+					intent.setDataAndType(Uri.fromFile(file), "application/vnd.android.package-archive");
+
 				intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
 				intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
 				mainContext.startActivity(intent);
@@ -277,7 +287,8 @@ public class Tools extends Extension
 	 */
 	public static void enableAppSecure()
 	{
-		mainActivity.runOnUiThread(new Runnable() {
+		mainActivity.runOnUiThread(new Runnable()
+		{
 			@Override
 			public void run()
 			{
@@ -334,6 +345,33 @@ public class Tools extends Extension
 	}
 
 	/**
+	 * Requests permissions from the user if they are not granted.
+	 *
+	 * @param permissions An array of permission strings to request.
+	 * @param requestCode The request code to identify the request.
+	 */
+	public static void requestPermissions(String[] permissions, int requestCode)
+	{
+		List<String> ungrantedPermissions = new ArrayList<>();
+
+		try
+		{
+			for (String permission : permissions)
+			{
+				if (Extension.mainActivity.checkSelfPermission(permission) != PackageManager.PERMISSION_GRANTED)
+					ungrantedPermissions.add(permission);
+        		}
+
+			if (!ungrantedPermissions.isEmpty())
+				Extension.mainActivity.requestPermissions(ungrantedPermissions.toArray(new String[0]), requestCode);
+		}
+		catch (Exception e)
+		{
+			Log.e(LOG_TAG, e.toString());
+		}
+	}
+
+	/**
 	 * Requests a specific system setting.
 	 *
 	 * @param setting The setting to request.
@@ -354,30 +392,6 @@ public class Tools extends Extension
 	}
 
 	/**
-	 * Checks whether the device is rooted.
-	 *
-	 * @return true if the device is rooted, false otherwise.
-	 */
-	public static boolean isRooted()
-	{
-		try
-		{
-			final Process execute = Runtime.getRuntime().exec("su");
-
-			execute.waitFor();
-
-			if (execute.exitValue() != 255)
-				return true;
-		}
-		catch (Exception e)
-		{
-			Log.e(LOG_TAG, e.toString());
-		}
-
-		return false;
-	}
-
-	/**
 	 * Checks whether Dolby Atmos is supported on the device.
 	 *
 	 * @return true if Dolby Atmos is supported, false otherwise.
@@ -386,13 +400,15 @@ public class Tools extends Extension
 	{
 		try
 		{
-			final MediaFormat format = new MediaFormat();
+			final MediaFormat formatEac3 = new MediaFormat();
+			formatEac3.setString(MediaFormat.KEY_MIME, "audio/eac3-joc");
 
-			format.setString(MediaFormat.KEY_MIME, "audio/eac3-joc"); // or "audio/ac4"
+			final MediaFormat formatAc4 = new MediaFormat();
+			formatAc4.setString(MediaFormat.KEY_MIME, "audio/ac4");
 
 			final MediaCodecList codecList = new MediaCodecList(MediaCodecList.ALL_CODECS);
 
-			if (codecList.findDecoderForFormat(format) != null)
+			if (codecList.findDecoderForFormat(formatEac3) != null || codecList.findDecoderForFormat(formatAc4) != null)
 				return true;
 		}
 		catch (Exception e)
@@ -426,12 +442,17 @@ public class Tools extends Extension
 					if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O)
 						notificationManager.createNotificationChannel(new NotificationChannel(channelID, channelName, NotificationManager.IMPORTANCE_DEFAULT));
 
-					final Notification.Builder builder = new Notification.Builder(mainContext, channelID);
+					final Notification.Builder builder;
+
+					if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O)
+						builder = new Notification.Builder(mainContext, channelID);
+					else
+						builder = new Notification.Builder(mainContext);
+
 					builder.setAutoCancel(true);
 					builder.setContentTitle(title);
 					builder.setContentText(message);
-					builder.setDefaults(Notification.DEFAULT_ALL);
-					builder.setSmallIcon(android.R.drawable.ic_dialog_info);
+					builder.setSmallIcon(mainContext.getResources().getIdentifier("icon", "drawable", packageName));
 					builder.setWhen(System.currentTimeMillis());
 					notificationManager.notify(ID, builder.build());
 				}

@@ -135,7 +135,7 @@ class Environment
 	 */
 	public static inline function isExternalStorageManager():Bool
 	{
-		return JNICache.createStaticMethod('android.os.Environment', 'isExternalStorageManager', '()Z')();
+		return (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) ? JNICache.createStaticMethod('android.os.Environment', 'isExternalStorageManager', '()Z')() : true;
 	}
 
 	/**
@@ -165,6 +165,7 @@ class Environment
 	 *
 	 * @return The absolute path of the File object.
 	 */
+	@:noCompletion
 	private static inline function getAbsolutePath(file:Dynamic):String
 	{
 		return JNI.callMember(JNICache.createMemberMethod('java/io/File', 'getAbsolutePath', '()Ljava/lang/String;'), file, []);
